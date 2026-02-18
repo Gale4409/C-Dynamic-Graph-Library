@@ -1,17 +1,47 @@
-# ⚡ DynaGraph
+# DynaGraph
 
-**A high-performance C library for Fully Dynamic Graph Connectivity.**
+⚡ A high-performance C library for Fully Dynamic Graph Connectivity.
 
-*🚧 Note: This project is currently in active development. 🚧*
+## 🚧 Status: In Development
 
-## 🎯 Overview
-The goal of `DynaGraph` is to efficiently maintain graph connectivity and answer component queries (e.g., "Are nodes A and B in the same connected component?") while edges are continuously inserted or deleted in real-time. 
+**Current Progress:**
+- ✅ Core graph structure with adjacency lists
+- ✅ Dynamic node insertion with automatic resizing
+- ✅ Dynamic edge insertion/deletion
+- ✅ Node deletion with cascading edge cleanup
+- ✅ Efficient node index reuse via Queue
+- 🔄 Symbol Table (hash table) - In progress
+- 🔄 Dynamic Spanning Forest - Planned
+- 🔄 Connectivity queries - Planned
+- 🔄 Benchmarking suite - Planned
 
-Instead of naively recalculating the components from scratch using a standard Breadth-First Search or Tarjan's algorithm—which takes $O(V+E)$ time per update—this library explores advanced dynamic data structures (like Dynamic Spanning Forests) to handle updates in sub-linear time.
+## 📁 Current Structure
+```
+├── dynagraph.h       # Public API
+├── dynagraph.c       # Core implementation
+├── Queue.h/.c        # FIFO queue for node reuse
+├── ST.h/.c           # Symbol table (coming soon)
+└── Item.h/.c         # Generic item type (coming soon)
+```
 
-## 🗺️ Current Roadmap
-- [x] Initial architecture design and data structure planning.
-- [ ] Implementation of the naive baseline (Full BFS/DFS recalculation) for rigorous benchmarking.
-- [ ] Core implementation of the Dynamic Spanning Forest.
-- [ ] Complete memory safety verification via rigorous Valgrind testing.
-- [ ] Performance benchmarking (Latency vs. Throughput) on large-scale datasets.
+## 🔨 Building
+
+Currently work-in-progress. Full build instructions coming soon.
+
+## 📖 API Overview (Implemented)
+```c
+G DynaGraphinit(int V);                    // Initialize graph with V slots
+int DynaGraphNodeInsert(G graph);          // Insert node, returns index
+void DynaGraphEdgeInsert(G graph, Edge e); // Insert weighted edge
+void DynaGraphNodeRemove(G graph, int v);  // Remove node and all edges
+void DynaGraphEdgeRemove(G graph, Edge e); // Remove edge
+void DynaGraphfree(G graph);               // Free all memory
+```
+
+## 🎯 Goals
+
+Achieve **sub-linear update complexity** for dynamic connectivity queries instead of naive $O(V+E)$ recomputation using Dynamic Spanning Forest techniques.
+
+---
+
+**Note:** This is an active research project. Implementation is ongoing and API may change.
