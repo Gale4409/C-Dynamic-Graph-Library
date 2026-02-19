@@ -1,6 +1,6 @@
 #include "dynagraph.h"
 #include "Queue.h"
-#include "ST.h"
+#include "hash_table.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -14,7 +14,7 @@ struct node {
 struct dynagraph {
     int V; int E;
     int n_vertex;
-    ST tab;
+    HASH h;
     link *ladj;
     int *is_active;
     Queue queue; //I'll use a queue to save the not_active vertex and reuse them in case of necessity
@@ -36,15 +36,16 @@ G DynaGraphinit (int V) {
     if (graph->queue == NULL) { free(graph); return NULL; }
     graph->ladj = calloc (V, sizeof(link));
     if (graph->ladj == NULL) { Qfree(graph->queue); free(graph); return NULL; }
-    graph->tab = STinit(V);
-    if (graph->tab == NULL) { Qfree(graph->queue); free(graph->ladj); free(graph); return NULL; }
+    graph->h = hash_init(V);
+    if (graph->h == NULL) { Qfree(graph->queue); free(graph->ladj); free(graph); return NULL; }
     graph->is_active = calloc (graph->V, sizeof(int));
-    if (graph->is_active == NULL) { STfree(graph->tab); Qfree(graph->queue); free(graph->ladj); free(graph); return NULL;}
+    if (graph->is_active == NULL) { hash_free(graph->h); Qfree(graph->queue); free(graph->ladj); free(graph); return NULL;}
     return graph;
 }
 
 int DynaGraphNodeInsert (G graph) {
     if (graph == NULL) return -1;
+
     if (graph->V == graph->n_vertex && QisEmpty(graph->queue)) {
         link *tmp_ladj = malloc(2*graph->V*sizeof(link));
         if (tmp_ladj == NULL) return -1;
@@ -67,7 +68,9 @@ int DynaGraphNodeInsert (G graph) {
         graph->ladj = tmp_ladj;
         graph->is_active = tmp_active;
         graph->V = 2*graph->V;
+        resize_reverse_array(graph->h, graph->V);    // reallocating also the revrse array to make space for new IDs
     }
+
     if (QisEmpty(graph->queue)) {
         graph->is_active[graph->n_vertex] = 1; //activation of the node
         graph->n_vertex++;
@@ -99,6 +102,8 @@ void DynaGraphNodeRemove (G graph, int v) {
         x = tmp;
     }
     graph->ladj[v] = NULL;
+
+    hash_remove(graph->h, v);
 }
 
 void DynaGraphEdgeRemove (G graph, Edge e) {
@@ -140,7 +145,7 @@ void DynaGraphfree (G graph) {
         }
     }
     free(graph->ladj);
-    STfree(graph->tab);
+    hash_free(graph->h);
     free(graph->is_active);
     Qfree(graph->queue);
     free(graph);
