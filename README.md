@@ -40,7 +40,6 @@ void DynaGraphfree(G graph);               // Free all memory
 ### Symbol Table (Hash Table)
 ```c
 HASH hash_init(int maxN);                          // Initialize table with maxN slots
-void reverse_array_init(HASH h, int max_ids);      // Initialize reverse lookup array
 void resize_reverse_array(HASH h, int new_size);   // Expand reverse array on graph resize
 int  hash_search(HASH h, Item item);               // Lookup by key → returns id, or -1
 void hash_insert(HASH h, Item item, int id);       // Insert item with associated id
