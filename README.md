@@ -19,7 +19,6 @@
 ├── dynagraph.c       # Core implementation
 ├── hash_table.h/.c   # Symbol table with bidirectional lookup
 ├── Queue.h/.c        # FIFO queue for node reuse
-├── ST.h/.c           # Symbol table wrapper (coming soon)
 └── Item.h/.c         # Generic item type (coming soon)
 ```
 
