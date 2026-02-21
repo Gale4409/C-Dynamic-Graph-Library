@@ -10,6 +10,8 @@ int DynaGraphNodeInsert (G graph); //return the index in wich the new node is sa
 void DynaGraphEdgeInsert (G graph, Edge e);
 void DynaGraphNodeRemove (G graph, int v);
 void DynaGraphEdgeRemove (G graph, Edge e);
+int isArticulationPoint(G graph, int v);
+int isBridge(G graph, Edge e);
 void DynaGraphfree (G graph);
 
 #endif
