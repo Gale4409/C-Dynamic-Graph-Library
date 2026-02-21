@@ -9,8 +9,9 @@
 - ✅ Node deletion with cascading edge cleanup
 - ✅ Efficient node index reuse via Queue
 - ✅ Symbol Table (hash table) - Completed
+- ✅ Item module - Completed
+- ✅ Baseline O(V+E) connectivity checks (articulation points & bridges)
 - 🔄 Dynamic Spanning Forest - Planned
-- 🔄 Connectivity queries - Planned
 - 🔄 Benchmarking suite - Planned
 
 ## 📁 Current Structure
@@ -19,7 +20,7 @@
 ├── dynagraph.c       # Core implementation
 ├── hash_table.h/.c   # Symbol table with bidirectional lookup
 ├── Queue.h/.c        # FIFO queue for node reuse
-└── Item.h/.c         # Generic item type (coming soon)
+└── item.h/.c         # Generic item type for the symbol table
 ```
 
 ## 🔨 Building
@@ -29,12 +30,18 @@ Currently work-in-progress. Full build instructions coming soon.
 
 ### Graph
 ```c
-G DynaGraphinit(int V);                    // Initialize graph with V slots
-int DynaGraphNodeInsert(G graph);          // Insert node, returns index
-void DynaGraphEdgeInsert(G graph, Edge e); // Insert weighted edge
-void DynaGraphNodeRemove(G graph, int v);  // Remove node and all edges
-void DynaGraphEdgeRemove(G graph, Edge e); // Remove edge
-void DynaGraphfree(G graph);               // Free all memory
+G DynaGraphinit(int V);                        // Initialize graph with V slots
+int DynaGraphNodeInsert(G graph);              // Insert node, returns index
+void DynaGraphEdgeInsert(G graph, Edge e);     // Insert weighted edge
+void DynaGraphNodeRemove(G graph, int v);      // Remove node and all edges
+void DynaGraphEdgeRemove(G graph, Edge e);     // Remove edge
+void DynaGraphfree(G graph);                   // Free all memory
+```
+
+### Connectivity Queries
+```c
+int isArticulationPoint(G graph, int v);  // Returns 1 if v is an articulation point, 0 if not, -1 on error
+int isBridge(G graph, Edge e);            // Returns 1 if e is a bridge, 0 if not, -1 on error
 ```
 
 ### Symbol Table (Hash Table)
@@ -44,12 +51,21 @@ void resize_reverse_array(HASH h, int new_size);   // Expand reverse array on gr
 int  hash_search(HASH h, Item item);               // Lookup by key → returns id, or -1
 void hash_insert(HASH h, Item item, int id);       // Insert item with associated id
 void hash_remove(HASH h, int id);                  // Remove by id
-void free_hash_table(HASH h);                      // Free all memory
+void hash_free(HASH h);                            // Free all memory
 ```
 
 ## 🗂️ Symbol Table Design
 
 The symbol table maps string vertex names to internal integer IDs and back, acting as the bridge between the user-facing API (where nodes have names) and the internal graph representation (where nodes are array indices).
+
+### Item Module
+
+The `Item` type has been extracted into its own `item.h`/`item.c` module, decoupling it from the hash table implementation. This makes it easy to swap out the key type in the future without touching the hash table logic. Currently an `Item` holds a `char *key`, and the module exposes:
+
+```c
+int item_compare(Item a, Item b);  // strcmp-based comparison
+Item Item_set_void();              // returns an empty Item (key = NULL)
+```
 
 ### Bidirectional Lookup
 
@@ -95,8 +111,23 @@ if ((float) h->currentN / (float) h->M > TARGET_ALPHA){
 
 `TARGET_ALPHA` is set to **5.0**, meaning on average 5 elements per bucket before resizing. This is intentionally higher than the typical threshold of 0.75 used in open addressing schemes. With chaining, a load factor of 5 still gives O(1) average lookup (each chain scan averages 5 comparisons), while keeping memory usage low — important since the graph itself already allocates adjacency lists and auxiliary arrays. The table doubles in size on each resize, and rehashing is done **in-place** by relinking existing nodes into the new bucket array without any extra allocation, keeping the resize cost to O(N).
 
+## 📐 Connectivity Checks — Baseline O(V+E)
+
+Two query functions are now available to test whether removing a node or an edge would disconnect the graph (or increase the number of connected components):
+
+- **`isArticulationPoint(G graph, int v)`** — virtually removes `v` by temporarily deactivating it, runs a DFS to count connected components before and after, and restores the node. Returns 1 if the CC count increases (articulation point), 0 otherwise.
+- **`isBridge(G graph, Edge e)`** — removes the edge from the adjacency lists, runs the same DFS comparison, then reinserts the edge. Returns 1 if the CC count increases (bridge), 0 otherwise.
+
+Both functions are **non-destructive**: the graph is left in exactly the same state as before the call. The user can then decide independently whether to actually perform the removal.
+
+These work correctly on **generic graphs** (not necessarily connected): the baseline CC count before removal is always computed, so an increase of any magnitude is detected regardless of the initial topology.
+
+> **Note on `isBridge`:** the edge is reinserted using the `wt` field from the `Edge` struct passed by the caller. Make sure to pass the correct weight, otherwise the edge will be restored with a wrong weight.
+
+This O(V+E) implementation serves as the **correctness baseline and benchmark reference** for the upcoming sub-linear Dynamic Spanning Forest approach.
+
 ## 🎯 Goals
-Achieve **sub-linear update complexity** for dynamic connectivity queries instead of naive $O(V+E)$ recomputation using Dynamic Spanning Forest techniques.
+Achieve **sub-linear update complexity** for dynamic connectivity queries instead of naive O(V+E) recomputation using Dynamic Spanning Forest techniques.
 
 ---
 **Note:** This is an active research project. Implementation is ongoing and API may change.
