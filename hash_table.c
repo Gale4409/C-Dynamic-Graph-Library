@@ -3,7 +3,7 @@
 #include "hash_table.h"
 #include <string.h>
 
-typedef enum{false, true} bool;
+
 typedef struct hash_node *link;
 
 struct hash_node{

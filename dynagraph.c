@@ -1,6 +1,7 @@
 #include "dynagraph.h"
 #include "Queue.h"
 #include "hash_table.h"
+#include "UF.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,6 +11,15 @@ struct node {
     int v; int wt;
     link next;
 };
+
+struct Edge {
+    int v; int w; int wt;
+};
+
+typedef struct st_edges{
+    Edge *edges;        // array of the selected edges of the ST
+    int cont;   // numeber of edges in the ST
+}ST_edges;
 
 struct dynagraph {
     int V; int E;
@@ -187,6 +197,30 @@ int isBridge(G graph, Edge e) { //copy of the function to calculate it for a sin
     free (visited);
 
     return n_CC_start != n_CC_post_removal ? 1 : 0; //return of the result obtained
+}
+
+
+ST_edges calculate_ST(G graph){
+    UF uf = UF_init(graph->V);
+    ST_edges st;
+    st.edges = malloc((graph->V-1)*sizeof(Edge));       // worst case scenario: got to take V-1 edges
+    st.cont = 0;
+    for (int i = 0; i < graph->V; i++){     // cycling through all the edges of the graph and trying to add them to the ST, if the union is successful, the edge is added to the ST, otherwise it's not added
+        if (graph->is_active[i] == 0) continue;
+        link t;
+        for (t = graph->ladj[i]; t != NULL; t = t->next){
+            if (i < t->v){     //to avoid to check the same edge twice
+                if (UF_union(uf, i, t->v) == 0) { //if the union is successful, the edge is added to the ST
+                    st.edges[st.cont].v = i; 
+                    st.edges[st.cont].w = t->v;
+                    st.edges[st.cont].wt = t->wt;
+                    st.cont++;
+                }
+            }
+        }
+    }
+    UF_free(uf);
+    return st;
 }
 
 void DynaGraphfree (G graph) {
