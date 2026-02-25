@@ -133,6 +133,62 @@ void DynaGraphEdgeRemove (G graph, Edge e) {
     graph->E--;
 }
 
+static void DFS_CC_R (int v, G graph, int *visited) {
+    visited[v] = 1;
+    link x;
+    for (x=graph->ladj[v]; x!=NULL; x=x->next) {
+        if (graph->is_active[x->v] == 0 || visited[x->v] == 1) continue;
+        DFS_CC_R (x->v, graph, visited);
+    }
+}
+
+static int DFS_CC (G graph, int *visited) {
+    int cont = 0;
+    int i;
+    for (i=0; i<graph->V; i++) {
+        if (visited[i] == 1 || graph->is_active[i] == 0) continue;
+        DFS_CC_R (i, graph, visited);
+        cont++;
+    }
+    return cont;
+}
+
+static void reset_vet (int *v, int len) {
+    for (int i=0; i<len; i++) v[i] = 0;
+}
+
+int isArticulationPoint(G graph, int v) {
+    if (graph == NULL || v < 0 || v >= graph->n_vertex) return -1;
+    if (graph->is_active[v] == 0) return -1;
+    int *visited = calloc (graph->V, sizeof(int));
+
+    int n_CC_start = DFS_CC (graph, visited); //calculation of the initial number of CC
+    //virtual removal of the vertex and recalculation of the n_CC:
+    graph->is_active[v] = 0;
+    reset_vet(visited, graph->V);
+    int n_CC_post_removal = DFS_CC (graph, visited);
+    graph->is_active[v] = 1; //reset the vertex as used, if the user wants to enable the vertex is able to do it later with the apposite function
+    free (visited); //freed the memory to avoid memory leak
+
+    return n_CC_start != n_CC_post_removal ? 1 : 0; //return of the result obtained
+}
+
+int isBridge(G graph, Edge e) { //copy of the function to calculate it for a single vertex but with the removal of the Edge
+    if (graph == NULL || e.v < 0 || e.w < 0 || e.v >= graph->V || e.w >= graph->V) return -1;
+    if (graph->is_active[e.v] == 0 || graph->is_active[e.w] == 0) return -1;
+    int *visited = calloc (graph->V, sizeof(int));
+
+    int n_CC_start = DFS_CC (graph, visited); //calculation of the initial number of CC
+    //virtual removal of the vertex and recalculation of the n_CC:
+    DynaGraphEdgeRemove(graph, e);
+    reset_vet(visited, graph->V);
+    int n_CC_post_removal = DFS_CC (graph, visited);
+    DynaGraphEdgeInsert(graph, e);
+    free (visited);
+
+    return n_CC_start != n_CC_post_removal ? 1 : 0; //return of the result obtained
+}
+
 void DynaGraphfree (G graph) {
     if (graph == NULL) return;
     int i;
