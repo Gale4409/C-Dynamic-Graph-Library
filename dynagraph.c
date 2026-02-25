@@ -199,7 +199,7 @@ int isBridge(G graph, Edge e) { //copy of the function to calculate it for a sin
     return n_CC_start != n_CC_post_removal ? 1 : 0; //return of the result obtained
 }
 
-
+// returns the spanning forest of the graph or the spanning tree(connected graph), using UF module, high efficency, O(E*α(V)), almost linear time
 ST_edges calculate_ST(G graph){
     UF uf = UF_init(graph->V);
     ST_edges st;
