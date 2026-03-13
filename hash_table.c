@@ -3,7 +3,7 @@
 #include "hash_table.h"
 #include <string.h>
 
-
+typedef enum{false, true} bool;
 typedef struct hash_node *link;
 
 struct hash_node{
@@ -53,14 +53,18 @@ HASH hash_init(int maxN){
         h->table[i] = NULL;
     }
     h->size_rev_array = maxN;
-    h->reverse_array = malloc(maxN*sizeof(Item));
+    h->reverse_array = calloc(maxN, sizeof(Item));
     return h;
 }
 
 // called by DynaGraphInsertNode if it has to realloc, we have to make space for new ids coming
 void resize_reverse_array(HASH h, int new_size){
+    int old_size = h->size_rev_array;
     h->size_rev_array = new_size;
     h->reverse_array = realloc(h->reverse_array, new_size*sizeof(Item));
+    if (h->reverse_array && new_size > old_size)
+        memset(h->reverse_array + old_size, 0,
+               (size_t)(new_size - old_size) * sizeof(Item));
 }
 
 
